@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Fisheye</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="labelZ">Z = </string>
+    <string name="labelR">R =</string>
+    <string name="label0">O =</string>
+    <string name="labeltogglefisheye">Toggle fisheye</string>
+    <string name="labeltogglepartial">Toggle partial</string>
+</resources>
