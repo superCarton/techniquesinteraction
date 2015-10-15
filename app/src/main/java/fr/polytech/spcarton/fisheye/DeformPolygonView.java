@@ -30,21 +30,34 @@ public class DeformPolygonView extends View {
         super(context, attrs);
         partial=true;
         view = this;
+        generatePolygons(5, 10);
+
     }
 
     public float getX(){return x;}
     public float getY(){return y;}
-    public void setX(float xp){x= xp;}
-    public void setY(float yp){y= yp;}
+    public void setX(float xp){
+
+        if (xp<0) xp =0;
+        if (xp>1000) xp =1000;
+        this.x= xp;
+        deformer(precz, precr, preco);
+    }
+    public void setY(float yp){
+
+        if (yp<0) yp =0;
+        if (yp>1000) yp =1000;
+        this.y= yp;
+        deformer(precz, precr, preco);
+    }
 
 
     @Override
     public void onMeasure(int w, int h){
 
-        setMeasuredDimension(w, h);
+        setMeasuredDimension(1000, 1000);
         x=getMeasuredWidth()/2;
         y=getMeasuredHeight()/2;
-        generatePolygons(5, 20);
         deformer(42, 100, 1);
 
     }
@@ -76,8 +89,8 @@ public class DeformPolygonView extends View {
         elements = new ArrayList<MyPolygon>();
 
         // dimension dans laquelle s'inscrit un polygone
-        float w = (getMeasuredWidth()-marges*2) / (nb*2);
-        float h = (getMeasuredHeight()-marges*2) / (nb*2);
+        float w = (1000-marges*2) / (nb*2);
+        float h = (1000-marges*2) / (nb*2);
 
         // pour faire quelques carres différents
         int tiers = nb /3 ;
@@ -150,6 +163,7 @@ public class DeformPolygonView extends View {
 
                 float newX = x + (poly.xPoint(i) - x)*ratio;
                 float newY = y + (poly.yPoint(i) - y)*ratio;
+
                 newPoly.addPoint(newX, newY);
             }
 

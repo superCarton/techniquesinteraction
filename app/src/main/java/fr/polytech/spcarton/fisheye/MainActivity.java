@@ -1,13 +1,21 @@
 package fr.polytech.spcarton.fisheye;
 
 import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.SeekBar;
 import android.widget.Toast;
+
+import java.util.logging.Logger;
 
 
 public class MainActivity extends Activity {
@@ -15,11 +23,16 @@ public class MainActivity extends Activity {
     private float z, r, o;
     private SeekBar zbar, rbar, obar;
     private DeformPolygonView deform;
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+        Log.d("FisheyeTag", "start");
+
         setContentView(R.layout.activity_main);
 
         z = 42;
@@ -54,7 +67,7 @@ public class MainActivity extends Activity {
         rbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                r = progress+50;
+                r = progress + 50;
                 deform.deformer(z, r, o);
             }
 
@@ -85,7 +98,12 @@ public class MainActivity extends Activity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
+
+        mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -108,5 +126,43 @@ public class MainActivity extends Activity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mSensorManager.registerListener(mSensorEventListener, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mSensorManager.unregisterListener(mSensorEventListener, mAccelerometer);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mSensorManager.unregisterListener(mSensorEventListener, mAccelerometer);
+    }
+
+
+    /* ACCELEROMETRE EVENTS */
+    final SensorEventListener mSensorEventListener = new SensorEventListener() {
+
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // Que faire en cas de changement de précision ?
+        }
+
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            // Que faire en cas d'évènements sur le capteur ?
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+
+                //System.out.println("Event accelerometer x " + sensorEvent.values[0] + " y " + sensorEvent.values[1] + " z " + sensorEvent.values[2]);
+                deform.setY(deform.getY() + (1) * sensorEvent.values[1]);
+                deform.setX(deform.getX() + (-1) * sensorEvent.values[0]);
+
+            }
+        }
+    };
 
 }
