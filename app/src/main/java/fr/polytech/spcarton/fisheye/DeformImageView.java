@@ -75,7 +75,7 @@ public class DeformImageView extends ImageView {
 
         int i=0;
         for (int a:pixels){
-            modified[i++] = a;
+            modified[i++] = Color.WHITE;
         }
 
         int color;
@@ -90,20 +90,23 @@ public class DeformImageView extends ImageView {
 
                 float dmax = (float)Math.sqrt((-(2*z*O - r*r + (z - O)*(z - O))+Math.sqrt((2*z*O-r*r+(z-O)*(z-O))*(2*z*O-r*r+(z-O)*(z-O))-4*z*z*(O*O-r*r)))/2);
 
+                color = pixels[source.getWidth()*yt+xt];
+
                 if(d > dmax){
+
+                    modified[source.getWidth()*yt+xt] = color;
 
                 } else {
 
-                   // color = pixels[source.getWidth()*yt+xt];
 
                     float ratio = ((float)Math.sqrt((d*d+z*z) * (r*r - (z - O) * (z - O)) + z*z*(z - O) * (z - O)) + z*(z - O))/(d*d+z*z);
 
                     int newX = (int)(x + (xt - x)*ratio);
                     int newY = (int)(y + (yt - y)*ratio);
 
-                    bools[source.getWidth()*newY+newX] = true;
+                   // bools[source.getWidth()*newY+newX] = true;
 
-                    //modified[source.getWidth()*newY+newX] = color;
+                    modified[source.getWidth()*newY+newX] = color;
                 }
 
             }
@@ -112,7 +115,7 @@ public class DeformImageView extends ImageView {
 
 
         /* modify if */
-        for (int yt=0; yt<source.getHeight(); yt++){
+        /*for (int yt=0; yt<source.getHeight(); yt++){
             for (int xt=0; xt<source.getWidth(); xt++){
 
                 float d = (float)Math.sqrt((xt - x) * (xt - x) + (yt - y) * (yt - y));
@@ -137,7 +140,7 @@ public class DeformImageView extends ImageView {
                     }
                 }
             }
-        }
+        }*/
 
         invalidate();
     }
