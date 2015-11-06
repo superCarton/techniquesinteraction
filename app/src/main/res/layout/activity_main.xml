@@ -7,20 +7,23 @@
     android:id="@+id/a"
     android:background="#fff6fdff">
 
+
+    <fr.polytech.spcarton.fisheye.DeformImageView
+        android:layout_width="wrap_content"
+        android:layout_height="450dp"
+        android:id="@+id/imageView"
+        android:src="@drawable/charlie3"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/seekBarZ"
+        android:scaleType="centerCrop"
+        />
+
     <SeekBar
         android:layout_width="283dp"
         android:layout_height="wrap_content"
         android:id="@+id/seekBarZ"
         android:layout_above="@+id/seekBarR"
         android:layout_alignParentEnd="true" />
-
-    <fr.polytech.spcarton.fisheye.DeformImageView
-        android:layout_width="wrap_content"
-        android:layout_height="450dp"
-        android:id="@+id/imageView"
-        android:src="@drawable/charlie2"
-        android:layout_alignParentTop="true"
-        android:layout_above="@+id/seekBarZ" />
 
     <TextView
         android:layout_width="wrap_content"

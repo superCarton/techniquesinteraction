@@ -19,7 +19,7 @@ public class DeformImageView extends ImageView {
     private float precz, precr, preco;
     private int[] modified, pixels;
 
-    private Bitmap source = BitmapFactory.decodeResource(getResources(), R.drawable.charlie2);
+    private Bitmap source;
 
     // AJOUT
     // pour dessin non corrigé
@@ -43,7 +43,13 @@ public class DeformImageView extends ImageView {
     }
 
     public DeformImageView(Context context, AttributeSet attrs) {
+
         super(context, attrs);
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+        source = BitmapFactory.decodeResource(getResources(), R.drawable.charlie3, options);
+
         pixels = new int[source.getHeight()*source.getWidth()];
         source.getPixels(pixels, 0, source.getWidth(), 0, 0, source.getWidth(), source.getHeight());
 
