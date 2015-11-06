@@ -136,11 +136,11 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    /*
+/*
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(mSensorEventListener, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(mSensorEventListener, mAccelerometer, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
     }
 
     @Override
@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         mSensorManager.unregisterListener(mSensorEventListener, mAccelerometer);
-    }*/
+    }
 
 
     /* ACCELEROMETRE EVENTS */

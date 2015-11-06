@@ -21,6 +21,22 @@ public class DeformImageView extends ImageView {
 
     private Bitmap source = BitmapFactory.decodeResource(getResources(), R.drawable.charlie2);
 
+    // AJOUT
+    // pour dessin non corrigé
+    Bitmap calculatedBitmap;
+    int originalWidth;
+    int originalHeight;
+    Paint paintImage = new Paint(Paint.ANTI_ALIAS_FLAG);
+    Paint paintClear = new Paint(Paint.ANTI_ALIAS_FLAG);
+    {
+        paintClear.setColor(0);
+    }
+
+    // pour correction
+    boolean[][] listePoints; // tableau de vrai, pour recopie, gain mémoire...
+    boolean[][] zeros;  // tableau pour les pixels non modifier
+    // fin AJOUT
+
 
     public DeformImageView(Context context) {
         super(context);
@@ -39,22 +55,43 @@ public class DeformImageView extends ImageView {
         for (int a:pixels){
             modified[i++] = a;
         }
+
+        // AJOUT
+        originalWidth = source.getWidth();
+        originalHeight = source.getHeight();
+        // fin AJOUT
+
+        // AJOUT
+        listePoints = new boolean[originalWidth][originalHeight];
+        for (i = 0; i < originalWidth; i++) {
+            for (int j = 0; j < originalHeight; j++)
+                listePoints[i][j] = false;
+        }
+        zeros = new boolean[originalWidth][originalHeight];
+        // fin AJOUT
     }
 
     @Override
     protected void onDraw(Canvas canvas){
 
-        super.onDraw(canvas);
+        // AJOUT
+        // super.onDraw(canvas); // sinon, on redessine l'image source, non déformée, en fond
         Rect r = new Rect(0,0,source.getWidth(), source.getHeight());
+        /*
         Bitmap b = Bitmap.createBitmap(modified, source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);
         canvas.drawBitmap(b, null, r, new Paint(Paint.ANTI_ALIAS_FLAG));
+        */
+        canvas.drawRect(r,paintClear);
+        if (calculatedBitmap != null) canvas.drawBitmap(calculatedBitmap, r, r, paintImage);
+        else canvas.drawBitmap(source, r, r, paintImage);
+        // fin AJOUT
     }
 
 
     public void setXFisheye(float x){
 
         if (x<0) x =0;
-        if (x>1000) x =1000;
+        if (x>1000) x = 1000;
         this.x = x;
         deformer(precz, precr, preco);
     }
@@ -73,28 +110,36 @@ public class DeformImageView extends ImageView {
         precr=r;
         preco=O;
 
-        int i=0;
-        for (int a:pixels){
-            modified[i++] = Color.WHITE;
-        }
+        // AJOUT
+        modified = new int[pixels.length];
 
         int color;
-        boolean[] bools = new boolean[source.getHeight()*source.getWidth()];
-        for (i=0; i<bools.length; i++)
-            bools[i]= false;
 
+        // AJOUT
+        // déplacement
+        float dmax = (float)Math.sqrt((-(2*z*O - r*r + (z - O)*(z - O))+Math.sqrt((2*z*O-r*r+(z-O)*(z-O))*(2*z*O-r*r+(z-O)*(z-O))-4*z*z*(O*O-r*r)))/2);
+        int pymin = 0, pymax = 0, pxmin = 0, pxmax = 0;
+        pymin = (int) Math.max(y - dmax, 0);
+        pymax = (int) Math.min(y + dmax, originalHeight);
+        pxmin = (int) Math.max(x - dmax, 0);
+        pxmax = (int) Math.min(x + dmax, originalWidth);
+
+        //  ré-initialisation de zeros : recopie
+        for(int i=0; i < listePoints.length; i++) System.arraycopy(listePoints[i], 0, zeros[i], 0, listePoints[i].length);
+        // fin AJOUT
         for (int yt=0; yt<source.getHeight(); yt++){
             for (int xt=0; xt<source.getWidth(); xt++){
 
                 float d = (float)Math.sqrt((xt - x) * (xt - x) + (yt - y) * (yt - y));
 
-                float dmax = (float)Math.sqrt((-(2*z*O - r*r + (z - O)*(z - O))+Math.sqrt((2*z*O-r*r+(z-O)*(z-O))*(2*z*O-r*r+(z-O)*(z-O))-4*z*z*(O*O-r*r)))/2);
-
                 color = pixels[source.getWidth()*yt+xt];
 
                 if(d > dmax){
 
-                    modified[source.getWidth()*yt+xt] = color;
+                    // AJOUT
+                   // modified[source.getWidth()*yt+xt] = color;
+                    setNewPixel(xt, yt, color);
+                    //fin AJOUT
 
                 } else {
 
@@ -104,43 +149,23 @@ public class DeformImageView extends ImageView {
                     int newX = (int)(x + (xt - x)*ratio);
                     int newY = (int)(y + (yt - y)*ratio);
 
-                   // bools[source.getWidth()*newY+newX] = true;
+                    // AJOUT
+                    // modified[source.getWidth()*newY+newX] = color;
+                    setNewPixel(newX, newY, color);
 
-                    modified[source.getWidth()*newY+newX] = color;
+                    // fin AJOUT
                 }
 
             }
         }
 
+        // AJOUT
+        correct(pxmin, pxmax, pymin, pymax);
+        // fin AJOUT
 
-
-        /* modify if */
-        /*for (int yt=0; yt<source.getHeight(); yt++){
-            for (int xt=0; xt<source.getWidth(); xt++){
-
-                float d = (float)Math.sqrt((xt - x) * (xt - x) + (yt - y) * (yt - y));
-
-                float dmax = (float)Math.sqrt((-(2*z*O - r*r + (z - O)*(z - O))+Math.sqrt((2*z*O-r*r+(z-O)*(z-O))*(2*z*O-r*r+(z-O)*(z-O))-4*z*z*(O*O-r*r)))/2);
-
-                if(d > dmax){
-
-                } else {
-
-                    color = pixels[source.getWidth()*yt+xt];
-
-                    float ratio = ((float)Math.sqrt((d*d+z*z) * (r*r - (z - O) * (z - O)) + z*z*(z - O) * (z - O)) + z*(z - O))/(d*d+z*z);
-
-                    int newX = (int)(x + (xt - x)*ratio);
-                    int newY = (int)(y + (yt - y)*ratio);
-
-                    if (!bools[source.getWidth()*yt+xt]){
-                        modified[source.getWidth()*newY+newX] = color;
-                    } else {
-                        modified[source.getWidth()*newY+newX] = Color.WHITE;
-                    }
-                }
-            }
-        }*/
+        // AJOUT
+        calculatedBitmap = Bitmap.createBitmap(modified, originalWidth, originalHeight, Bitmap.Config.ARGB_8888);
+        // fin AJOUT
 
         invalidate();
     }
@@ -197,5 +222,180 @@ public class DeformImageView extends ImageView {
         return true;
     }
 
+
+    // AJOUT
+    private void setNewPixel(int i, int j, int p) {
+        if ((i < 0) || (i >= originalWidth) || (j < 0) || (j >= originalHeight))
+            return;
+        else {
+            modified[i + originalWidth * j] = p;
+            // AJOUT
+            zeros[i][j] = true;
+            //fin AJOUT
+        }
+    }
+    // fin AJOUT
+
+
+
+    // AJOUT
+    private void correct(int xmin, int xmax, int ymin, int ymax) {
+        int cpt = 0;
+        for (int i = xmin; i < xmax; i++)
+            for (int j = ymin; j < ymax; j++) {
+
+                if (! zeros[i][j]) {
+                    try {
+                        cpt++;
+                        int p = 0;
+
+                        int sommeR = 0;
+                        int sommeG = 0;
+                        int sommeB = 0;
+                        int sommeA = 0;
+                        int nb = 0;
+
+                        int indice = i + originalWidth * j;
+                        p = modified[indice];
+
+
+                        if (i >= 1) {
+                            if (zeros[i-1][j]) {
+                                p = modified[indice-1];
+                                sommeR += getCanal(p, 16);
+                                sommeG += getCanal(p, 8);
+                                sommeB += getCanal(p, 0);
+                                // sommeA += getCanal(p,24);
+                                nb += 1;
+                            }
+                        }
+
+                        if (i < originalWidth - 1) {
+
+                            if (zeros[i+1][j]) {
+                                p = modified[indice+1];
+                                sommeR += getCanal(p, 16);
+                                sommeG += getCanal(p, 8);
+                                sommeB += getCanal(p, 0);
+                                // sommeA += getCanal(p,24);
+                                nb += 1;
+                            }
+                        }
+
+                        if (j >= 1) {
+
+                            if (zeros[i][j-1]) {
+                                p = modified[indice - originalWidth ];
+                                sommeR += getCanal(p, 16);
+                                sommeG += getCanal(p, 8);
+                                sommeB += getCanal(p, 0);
+                                // sommeA += getCanal(p,24);
+                                nb += 1;
+                            }
+
+                            if (i >= 1) {
+
+                                if (zeros[i-1][j-1]) {
+                                    p = modified[indice -1 - originalWidth];
+                                    sommeR += getCanal(p, 16);
+                                    sommeG += getCanal(p, 8);
+                                    sommeB += getCanal(p, 0);
+                                    // sommeA += getCanal(p,24);
+                                    nb += 1;
+                                }
+                            }
+
+                            if (i < originalWidth - 1) {
+
+                                if (zeros[i+1][j-1]) {
+                                    p = modified[indice +1 - originalWidth];
+                                    sommeR += getCanal(p, 16);
+                                    sommeG += getCanal(p, 8);
+                                    sommeB += getCanal(p, 0);
+                                    // sommeA += getCanal(p,24);
+                                    nb += 1;
+                                }
+                            }
+                        }
+
+                        if (j < originalHeight - 1) {
+
+                            if (zeros[i][j+1]) {
+                                p = modified[indice+ originalWidth ];
+                                sommeR += getCanal(p, 16);
+                                sommeG += getCanal(p, 8);
+                                sommeB += getCanal(p, 0);
+                                // sommeA += getCanal(p,24);
+                                nb += 1;
+                            }
+
+                            if (i >= 1) {
+
+                                if (zeros[i-1][j+1]) {
+                                    p = modified[indice -1 + originalWidth];
+                                    sommeR += getCanal(p, 16);
+                                    sommeG += getCanal(p, 8);
+                                    sommeB += getCanal(p, 0);
+                                    // sommeA += getCanal(p,24);
+                                    nb += 1;
+                                }
+                            }
+
+                            if (i < originalWidth - 1) {
+
+                                if (zeros[i+1][j+1]) {
+                                    p = modified[indice +1 + originalWidth];
+                                    sommeR += getCanal(p, 16);
+                                    sommeG += getCanal(p, 8);
+                                    sommeB += getCanal(p, 0);
+                                    // sommeA += getCanal(p,24);
+                                    nb += 1;
+                                }
+                            }
+                        }
+
+                        if (nb > 0) {
+                            int r = (int) (sommeR / nb);
+                            int b = (int) (sommeB / nb);
+                            int green = (int) (sommeG / nb);
+
+                            int somme = (r << 16) | (green << 8) | (b)
+                                    | 0xFF000000;
+
+                            setNewPixel(i, j, somme);
+
+                        }
+                        else setNewPixel(i, j, 0xFF000000);
+
+                        zeros[i][j] = true;
+                    }
+
+                    catch (ArrayIndexOutOfBoundsException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+      //  System.out.println("cpt nb corr = "+cpt);
+
+    }
+
+
+    private static int getCanal(int p, int dec) {
+        int masque = 0;
+        if (dec == 0)
+            masque = 0xFF;
+        else if (dec == 8)
+            masque = 0xFF00;
+        else if (dec == 16)
+            masque = 0xFF0000;
+        else if (dec == 24)
+            masque = 0xFF000000;
+
+        int result = p & masque;
+        result = result >> dec;
+
+        return result;
+    }
+    //fin AJOUT
 
 }
