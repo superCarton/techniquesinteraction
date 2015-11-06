@@ -88,19 +88,23 @@ public class DeformImageView extends ImageView {
     }
 
 
-    public void setXFisheye(float x){
+    public void addXFisheye(float x){
 
+        x = x + this.x;
         if (x<0) x =0;
         if (x>1000) x = 1000;
         this.x = x;
-        deformer(precz, precr, preco);
     }
 
-    public void setYFisheye(float y){
+    public void addYFisheye(float y){
 
+        y = y + this.y;
         if (y<0) y =0;
         if (y>1000) y =1000;
         this.y = y;
+    }
+
+    public void validerDeplacement(){
         deformer(precz, precr, preco);
     }
 

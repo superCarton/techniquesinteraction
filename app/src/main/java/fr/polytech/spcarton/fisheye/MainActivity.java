@@ -2,23 +2,17 @@ package fr.polytech.spcarton.fisheye;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
-import java.util.logging.Logger;
+import java.util.Date;
 
 
 public class MainActivity extends Activity {
@@ -88,26 +82,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        /*
-        obar = (SeekBar) findViewById(R.id.seekBarO);
-        obar.setMax(2);
-
-        obar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                o = progress;
-                deform.deformer(z,r,o);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });*/
-
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
@@ -136,7 +110,7 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-/*
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -159,6 +133,11 @@ public class MainActivity extends Activity {
     /* ACCELEROMETRE EVENTS */
     final SensorEventListener mSensorEventListener = new SensorEventListener() {
 
+        private final int sensibilite = 4;
+        private final int coefMoove = 2;
+        private final long milliBeforeCalc = 400;
+        private long lastTime = System.currentTimeMillis();
+
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
             // Que faire en cas de changement de précision ?
         }
@@ -167,9 +146,18 @@ public class MainActivity extends Activity {
             // Que faire en cas d'évènements sur le capteur ?
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
 
-                //System.out.println("Event accelerometer x " + sensorEvent.values[0] + " y " + sensorEvent.values[1] + " z " + sensorEvent.values[2]);
-                deform.setYFisheye(deform.getY() + (1) * sensorEvent.values[1]);
-                deform.setXFisheye(deform.getX() + (-1) * sensorEvent.values[0]);
+                if (Math.abs(sensorEvent.values[0])>sensibilite || Math.abs(sensorEvent.values[1])>sensibilite){
+
+                    long diff = System.currentTimeMillis() - lastTime;
+                    if (diff > milliBeforeCalc){
+                        lastTime = System.currentTimeMillis();
+                        deform.addXFisheye(coefMoove * sensorEvent.values[1]);
+                        deform.addYFisheye((coefMoove) * sensorEvent.values[0]);
+                        deform.validerDeplacement();
+                        System.out.println("Event accelerometer x " + sensorEvent.values[0] + " y " + sensorEvent.values[1]);
+                    }
+
+                }
 
             }
         }
